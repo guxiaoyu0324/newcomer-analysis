@@ -172,7 +172,7 @@ def process_data(data_dir, new_week):
     # 4. 本周领航+提交人数
     lh_submit_file = find_file(new_data_dir, ['本周领航+提交人数', '本周领航+提交'])
     if lh_submit_file:
-        df_lh_submit = pd.read_excel(lh_submit_file, engine='xlrd')
+        df_lh_submit = pd.read_excel(lh_submit_file, engine='xlrd', skiprows=[1])
         lh_submit_count = len(df_lh_submit)
     else:
         lh_submit_count = 0
