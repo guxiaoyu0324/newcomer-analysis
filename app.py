@@ -339,6 +339,10 @@ def process_data(data_dir, new_week):
     supp_interview_rate = supp_interview_pass / supp_interview_total if supp_interview_total > 0 else 0
     total_interview_rate = total_interview_pass / total_interview if total_interview > 0 else 0
 
+    # 百分数格式化辅助函数
+    def pct(v):
+        return f"{v*100:.2f}%"
+
     # --- 保存结果 ---
     results['table1'] = {
         'headers': ['来源', '本周试录题提交人数', '本周试录题通过人数', '本周面试人数',
@@ -346,24 +350,24 @@ def process_data(data_dir, new_week):
                    '累计面试通过人数', '累计转正人数', '累计v1v2人数', '转正率', 'v1v2占比'],
         'lh': ['领航', lh_submit, lh_trial_pass, lh_interview_total, lh_interview_pass,
                '', lh_this_week_v1v2, lh_pass_cumulative, lh_conversion,
-               lh_cumulative_v1v2, round(lh_conversion_rate, 4), round(lh_v1v2_ratio, 4)],
+               lh_cumulative_v1v2, pct(lh_conversion_rate), pct(lh_v1v2_ratio)],
         'supp': ['其他供应商', supp_submit, supp_trial_pass, supp_interview_total, supp_interview_pass,
                  '', supp_this_week_v1v2, supp_pass_cumulative, supp_conversion,
-                 supp_cumulative_v1v2, round(supp_conversion_rate, 4), round(supp_v1v2_ratio, 4)],
+                 supp_cumulative_v1v2, pct(supp_conversion_rate), pct(supp_v1v2_ratio)],
         'total': ['总计', total_submit, total_trial_pass, total_interview, total_interview_pass,
                   '', total_this_week_v1v2, total_pass_cumulative, total_conversion,
-                  total_cumulative_v1v2, round(total_conversion_rate, 4), round(total_v1v2_ratio, 4)]
+                  total_cumulative_v1v2, pct(total_conversion_rate), pct(total_v1v2_ratio)]
     }
 
     results['table2'] = {
         'headers': ['来源', '本周试录题提交人数', '本周试录题通过人数', '本周面试人数',
                    '本周面试通过人数', '试录题合格率', '面试通过率'],
         'lh': ['领航', lh_submit, lh_trial_pass, lh_interview_total, lh_interview_pass,
-               round(lh_trial_rate, 4), round(lh_interview_rate, 4)],
+               pct(lh_trial_rate), pct(lh_interview_rate)],
         'supp': ['其他供应商', supp_submit, supp_trial_pass, supp_interview_total, supp_interview_pass,
-                 round(supp_trial_rate, 4), round(supp_interview_rate, 4)],
+                 pct(supp_trial_rate), pct(supp_interview_rate)],
         'total': ['总计', total_submit, total_trial_pass, total_interview, total_interview_pass,
-                  round(total_trial_rate, 4), round(total_interview_rate, 4)]
+                  pct(total_trial_rate), pct(total_interview_rate)]
     }
 
     # 历史数据
@@ -517,6 +521,10 @@ def process_data(data_dir, new_week):
     ax.plot(x, all_trial_supp, 'o-', label='供应商', linewidth=2, markersize=5)
     ax.plot(x, all_trial_lh, 's-', label='领航', linewidth=2, markersize=5)
     ax.plot(x, all_trial_comb, '^-', label='综合', linewidth=2, markersize=5)
+    for i, (vs, vl, vc) in enumerate(zip(all_trial_supp, all_trial_lh, all_trial_comb)):
+        ax.annotate(f'{vs*100:.1f}%', (x[i], vs), textcoords="offset points", xytext=(0,8), ha='center', fontsize=7)
+        ax.annotate(f'{vl*100:.1f}%', (x[i], vl), textcoords="offset points", xytext=(0,8), ha='center', fontsize=7)
+        ax.annotate(f'{vc*100:.1f}%', (x[i], vc), textcoords="offset points", xytext=(0,8), ha='center', fontsize=7)
     ax.set_xlabel('周度', fontproperties=chinese_font, fontsize=12)
     ax.set_ylabel('合格率', fontproperties=chinese_font, fontsize=12)
     ax.set_title('试录题合格率变化趋势', fontproperties=chinese_font, fontsize=14)
@@ -524,7 +532,7 @@ def process_data(data_dir, new_week):
     ax.set_xticklabels(all_weeks, rotation=45, ha='right', fontsize=8)
     ax.legend(prop=chinese_font, fontsize=10)
     ax.grid(True, alpha=0.3)
-    ax.set_ylim(0, 1.1)
+    ax.set_ylim(0, 1.2)
     chart1 = os.path.join(output_dir, '试录题合格率变化趋势-新.png')
     plt.tight_layout()
     plt.savefig(chart1, dpi=150, bbox_inches='tight')
@@ -536,6 +544,10 @@ def process_data(data_dir, new_week):
     ax.plot(x, all_int_supp, 'o-', label='供应商', linewidth=2, markersize=5)
     ax.plot(x, all_int_lh, 's-', label='领航', linewidth=2, markersize=5)
     ax.plot(x, all_int_comb, '^-', label='综合', linewidth=2, markersize=5)
+    for i, (vs, vl, vc) in enumerate(zip(all_int_supp, all_int_lh, all_int_comb)):
+        ax.annotate(f'{vs*100:.1f}%', (x[i], vs), textcoords="offset points", xytext=(0,8), ha='center', fontsize=7)
+        ax.annotate(f'{vl*100:.1f}%', (x[i], vl), textcoords="offset points", xytext=(0,8), ha='center', fontsize=7)
+        ax.annotate(f'{vc*100:.1f}%', (x[i], vc), textcoords="offset points", xytext=(0,8), ha='center', fontsize=7)
     ax.set_xlabel('周度', fontproperties=chinese_font, fontsize=12)
     ax.set_ylabel('通过率', fontproperties=chinese_font, fontsize=12)
     ax.set_title('面试通过率走势', fontproperties=chinese_font, fontsize=14)
@@ -543,7 +555,7 @@ def process_data(data_dir, new_week):
     ax.set_xticklabels(all_weeks, rotation=45, ha='right', fontsize=8)
     ax.legend(prop=chinese_font, fontsize=10)
     ax.grid(True, alpha=0.3)
-    ax.set_ylim(0, 1.1)
+    ax.set_ylim(0, 1.2)
     chart2 = os.path.join(output_dir, '面试通过率走势-新.png')
     plt.tight_layout()
     plt.savefig(chart2, dpi=150, bbox_inches='tight')
