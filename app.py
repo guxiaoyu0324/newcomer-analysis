@@ -627,7 +627,7 @@ if uploaded_file is not None:
                                   mime="application/vnd.ms-excel")
 
             st.subheader("3. 试录题合格率变化趋势")
-            st.image(output_files['trial_chart'], use_container_width=True)
+            st.image(output_files['trial_chart'])
 
             with open(output_files['trial_trend'], 'rb') as f:
                 st.download_button(" 下载 试录题合格率变化趋势-新.xls", f,
@@ -635,7 +635,7 @@ if uploaded_file is not None:
                                   mime="application/vnd.ms-excel")
 
             st.subheader("4. 面试通过率走势")
-            st.image(output_files['interview_chart'], use_container_width=True)
+            st.image(output_files['interview_chart'])
 
             with open(output_files['interview_trend'], 'rb') as f:
                 st.download_button("📥 下载 面试通过率趋势-新.xls", f,
