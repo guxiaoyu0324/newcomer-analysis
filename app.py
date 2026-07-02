@@ -573,7 +573,14 @@ if uploaded_file is not None:
                             info.filename = info.filename.encode('cp437').decode('gbk')
                         except (UnicodeDecodeError, UnicodeEncodeError):
                             pass
-                zip_ref.extractall(temp_dir)
+                    # 逐个文件手动解压（不能用extractall，因为它会用修改后的名字去查原文件）
+                    target_path = os.path.join(temp_dir, info.filename)
+                    if info.is_dir():
+                        os.makedirs(target_path, exist_ok=True)
+                    else:
+                        os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                        with zip_ref.open(info) as src, open(target_path, 'wb') as dst:
+                            dst.write(src.read())
 
             # 查找数据目录（可能在根目录或子目录中）
             data_dir = temp_dir
