@@ -18,6 +18,7 @@ import os
 import zipfile
 import tempfile
 import shutil
+import base64
 from io import BytesIO
 
 # ============================================
@@ -566,6 +567,105 @@ def process_data(data_dir, new_week):
 
 
 # ============================================
+# 生成 HTML 报告
+# ============================================
+def generate_html_report(results, output_files, new_week):
+    """生成一个自包含的 HTML 报告文件"""
+    # 将图片转为 base64
+    def img_to_base64(path):
+        with open(path, 'rb') as f:
+            return base64.b64encode(f.read()).decode('utf-8')
+
+    trial_chart_b64 = img_to_base64(output_files['trial_chart'])
+    interview_chart_b64 = img_to_base64(output_files['interview_chart'])
+
+    # 生成表格 HTML
+    def table_to_html(headers, rows):
+        html = '<table><thead><tr>'
+        for h in headers:
+            html += f'<th>{h}</th>'
+        html += '</tr></thead><tbody>'
+        for row in rows:
+            html += '<tr>'
+            for v in row:
+                html += f'<td>{v}</td>'
+            html += '</tr>'
+        html += '</tbody></table>'
+        return html
+
+    t1 = results['table1']
+    t1_html = table_to_html(t1['headers'], [t1['lh'], t1['supp'], t1['total']])
+
+    t2 = results['table2']
+    t2_html = table_to_html(t2['headers'], [t2['lh'], t2['supp'], t2['total']])
+
+    # 分层版表格
+    ld = results['layered_data']
+    layer_headers = ['UID', '供应商', '实习状态'] + ld['layer_sheets']
+    layer_rows = []
+    for uid, supplier in zip(ld['uids'], ld['suppliers']):
+        row = [uid, supplier, ld['intern_status'][ld['uids'].index(uid)]]
+        for sn in ld['layer_sheets']:
+            row.append(ld['layer_data'].get(int(uid), {}).get(sn, ''))
+        layer_rows.append(row)
+    layer_html = table_to_html(layer_headers, layer_rows)
+
+    html = f'''<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>新人数据分析报告 - {new_week}</title>
+<style>
+body {{ font-family: "Microsoft YaHei", sans-serif; margin: 40px; background: #f9f9f9; }}
+h1 {{ text-align: center; color: #333; }}
+h2 {{ color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 8px; margin-top: 40px; }}
+table {{ border-collapse: collapse; width: 100%; margin: 16px 0; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }}
+th, td {{ border: 1px solid #ddd; padding: 8px 12px; text-align: center; }}
+th {{ background: #3498db; color: #fff; }}
+tr:nth-child(even) {{ background: #f2f2f2; }}
+tr:hover {{ background: #e8f4fd; }}
+img {{ max-width: 100%; margin: 16px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }}
+.section {{ background: #fff; padding: 24px; margin: 20px 0; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }}
+</style>
+</head>
+<body>
+<h1>新人数据分析报告 — {new_week}</h1>
+
+<div class="section">
+<h2>1. 新人指标监控全量表</h2>
+{t1_html}
+</div>
+
+<div class="section">
+<h2>2. 本周新人情况一览表</h2>
+{t2_html}
+</div>
+
+<div class="section">
+<h2>3. 试录题合格率变化趋势</h2>
+<img src="data:image/png;base64,{trial_chart_b64}" />
+</div>
+
+<div class="section">
+<h2>4. 面试通过率走势</h2>
+<img src="data:image/png;base64,{interview_chart_b64}" />
+</div>
+
+<div class="section">
+<h2>5. 面试通过-新人总名单-分层版（共 {len(ld["uids"])} 条）</h2>
+{layer_html}
+</div>
+
+</body>
+</html>'''
+
+    report_path = os.path.join(tempfile.gettempdir(), f'新人数据分析报告_{new_week}.html')
+    with open(report_path, 'w', encoding='utf-8') as f:
+        f.write(html)
+    return report_path
+
+
+# ============================================
 # Streamlit UI
 # ============================================
 st.title(" 新人数据自动化分析系统")
@@ -679,6 +779,13 @@ if uploaded_file is not None:
                 st.download_button("📥 下载 面试通过-新人总名单-分层版.xls", f,
                                   file_name="面试通过-新人总名单-分层版.xls",
                                   mime="application/vnd.ms-excel")
+
+            # 生成并下载 HTML 报告
+            html_path = generate_html_report(results, output_files, new_week)
+            with open(html_path, 'rb') as f:
+                st.download_button("📥 下载完整 HTML 报告", f,
+                                  file_name=f"新人数据分析报告_{new_week}.html",
+                                  mime="text/html")
 
             # 清理临时文件
             shutil.rmtree(temp_dir, ignore_errors=True)
