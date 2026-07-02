@@ -172,8 +172,10 @@ def process_data(data_dir, new_week):
     # 4. 本周领航+提交人数
     lh_submit_file = find_file(new_data_dir, ['本周领航+提交人数', '本周领航+提交'])
     if lh_submit_file:
-        df_lh_submit = pd.read_excel(lh_submit_file, engine='xlrd', skiprows=[1])
-        lh_submit_count = len(df_lh_submit)
+        df_lh_submit = pd.read_excel(lh_submit_file, engine='xlrd')
+        # 找到UID列，只统计值为数字的行（跳过重复表头）
+        uid_col = df_lh_submit.iloc[:, 2]  # UID在第3列
+        lh_submit_count = sum(1 for v in uid_col if pd.notna(v) and isinstance(v, (int, float)) and not isinstance(v, bool))
     else:
         lh_submit_count = 0
 
