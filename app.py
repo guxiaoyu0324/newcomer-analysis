@@ -564,8 +564,15 @@ if uploaded_file is not None:
             # 创建临时目录
             temp_dir = tempfile.mkdtemp()
 
-            # 解压zip文件
+            # 解压zip文件（处理Windows中文文件名编码问题）
             with zipfile.ZipFile(uploaded_file, 'r') as zip_ref:
+                for info in zip_ref.infolist():
+                    # 如果没有UTF-8标志位，说明是GBK编码的中文文件名
+                    if info.flag_bits & 0x800 == 0:
+                        try:
+                            info.filename = info.filename.encode('cp437').decode('gbk')
+                        except (UnicodeDecodeError, UnicodeEncodeError):
+                            pass
                 zip_ref.extractall(temp_dir)
 
             # 查找数据目录（可能在根目录或子目录中）
