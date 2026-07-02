@@ -13,6 +13,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib import font_manager
+import urllib.request
 import os
 import zipfile
 import tempfile
@@ -34,12 +35,27 @@ def get_chinese_font():
     font_paths = [
         '/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc',
         '/usr/share/fonts/wqy-zenhei/wqy-zenhei.ttc',
+        '/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc',
+        '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
+        '/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc',
         'C:/Windows/Fonts/simhei.ttf',
         'C:/Windows/Fonts/msyh.ttf',
     ]
     for fp in font_paths:
         if os.path.exists(fp):
             return font_manager.FontProperties(fname=fp)
+    # 服务器无中文字体，下载一个
+    font_dir = os.path.join(tempfile.gettempdir(), 'chinese_font')
+    os.makedirs(font_dir, exist_ok=True)
+    font_file = os.path.join(font_dir, 'SimHei.ttf')
+    if not os.path.exists(font_file):
+        url = 'https://github.com/StellarCN/scp_zh/raw/master/fonts/SimHei.ttf'
+        try:
+            urllib.request.urlretrieve(url, font_file)
+        except Exception:
+            pass
+    if os.path.exists(font_file):
+        return font_manager.FontProperties(fname=font_file)
     return font_manager.FontProperties()
 
 chinese_font = get_chinese_font()
